@@ -314,16 +314,21 @@ class StitcherGUI:
                     interpolation=cv2.INTER_LINEAR
                 )
 
-                stitched_fr = stitched_fr.get()
-                stitched_bk = stitched_bk.get()
+                scale = 0.25
 
-                lum_fr = cv2.cvtColor(stitched_fr, cv2.COLOR_BGR2GRAY).astype(np.float32)
-                lum_bk = cv2.cvtColor(stitched_bk, cv2.COLOR_BGR2GRAY).astype(np.float32)
+                small_fr = cv2.resize(stitched_fr.get(), None, fx=scale, fy=scale)
+                small_bk = cv2.resize(stitched_bk.get(), None, fx=scale, fy=scale)
 
-                lum_fr = cv2.GaussianBlur(lum_fr, (0, 0), 25)
-                lum_bk = cv2.GaussianBlur(lum_bk, (0, 0), 25)
+                #stitched_fr = stitched_fr.get()
+                #stitched_bk = stitched_bk.get()
 
-                gain_map = lum_fr / (lum_bk + 1e-6)
+                lum_fr = cv2.cvtColor(small_fr, cv2.COLOR_BGR2GRAY).astype(np.float32)
+                lum_bk = cv2.cvtColor(small_bk, cv2.COLOR_BGR2GRAY).astype(np.float32)
+
+                gain_map_small = lum_fr / (lum_bk + 1e-6)
+                gain_map_small = cv2.GaussianBlur(gain_map_small, (0,0), 10)
+
+                gain_map = cv2.resize(gain_map_small, (map_width, map_height))
                 gain_map = np.clip(gain_map, 0.5, 2.0)
 
                 stitched_bk = stitched_bk.astype(np.float32)
@@ -333,7 +338,8 @@ class StitcherGUI:
                 blended_fr = stitched_fr.astype(np.float32) * (mask0 / 255.0)
                 blended_bk = stitched_bk.astype(np.float32) * (mask1 / 255.0)
 
-                final_frame = cv2.add(blended_fr, blended_bk).astype(np.uint8)
+                #final_frame = cv2.add(blended_fr, blended_bk).astype(np.uint8)
+                final_frame = cv2.add(blended_fr, blended_bk)
 
                 final_frame_resized = cv2.resize(
                     final_frame,
